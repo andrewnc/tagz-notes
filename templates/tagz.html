@@ -1,0 +1,193 @@
+{% extends 'base.html' %}
+{% block extrastyles %}
+    <style type="text/css">
+        .text-chunk{
+            height:550px;
+            width: 100%;
+        }
+        .glyphicon:hover{
+            cursor: pointer;
+        }
+
+
+    </style>
+{% endblock %}
+
+{% block content %}
+
+    
+    <div class="col-xs-8">
+        <div class="chunks">
+            {% include 'chunks.html' %}
+        </div>
+        <div class="new-chunk">
+                <form name="new-chunk-form">
+                    <textarea class="text-chunk" form="new-chunk-form"></textarea>
+                    <input type="submit" class="btn btn-default col-xs-12" id="new-chunk-submit" />
+
+                </form>
+        </div>
+
+    </div>
+    <div class="col-xs-4">
+    <div>
+        <form name="new-tag-form" class="form-inline">
+            <input type="text" placeholder="new tag.." class="text-tag form-control col-xs-6" />
+            <input type="submit" class="btn btn-default col-xs-2" id="new-tag-submit" />
+
+        </form>
+    </div>
+    <div style="clear: both;"></div>
+        <div class="btn-group tagz" role="group" aria-label="...">
+
+            {% for tag in tagz %}
+                <div class="{{ tag.id }}" tagId={{ tag.id }}><span class="glyphicon glyphicon-remove tag-delete">&nbsp;</span><div class="btn btn-default check-btn" tagId={{ tag.id }}>{{ tag.text }}</div></div>
+            {% endfor %}
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block scripts %}
+    <script type="text/javascript">
+        $(document).ready(function () {
+
+
+            bind();
+
+            $(".text-chunk").focus();
+
+
+
+            $("#new-chunk-submit").click(function (event) {
+                console.log("here instead");
+                event.preventDefault();
+                var text = $('.mce-edit-area').html();
+                console.log(text);
+                var n = $(".btn-primary").size();
+                var tagz = $.map($('.btn-primary'), function(el) {
+                    $(el).removeClass("btn-primary");
+                    return {id: $(el).attr("tagId")}
+                });
+                if (n > 0){
+                    if (text != ''){
+                        console.log("here");
+                        $.ajax({
+                            type: "POST",
+                            url: "/tagz/chunk/new/",
+                            data: { csrfmiddlewaretoken: '{{ csrf_token }}',
+                                text: text,
+                                tagz: JSON.stringify(tagz),
+                            },
+                            success: function (data) {
+                                $('.chunks').append("<div class='panel fade-away'>"+data.text +" - Saved</div>");
+                                $('.fade-away').fadeOut(1500);
+                                $('.text-chunk').val(" ");
+                                console.log("success");
+                            },
+                            error: function(data) {
+                                console.log("failure");
+                            }
+                        });
+                        return false;
+                    }
+                }else{
+                    alert("Add some tagz son!");
+                }
+            })
+
+            $("#new-tag-submit").click(function (event) {
+                event.preventDefault();
+                var text = $('.text-tag').val();
+                if (text != ''){
+                    $.ajax({
+                        type: "POST",
+                        url: "/tagz/tag/new/",
+                        data: { csrfmiddlewaretoken: '{{ csrf_token }}',
+                            text: text,
+                        },
+                        success: function (data) {
+                            $('.tagz').append("<div class='"+ data.id +"' tagId="+ data.id +"><span class='glyphicon glyphicon-remove'>&nbsp;</span><div class='btn btn-default check-btn' tagId="+ data.id +">"+ data.text + "</div></div>");
+                            $('.text-tag').val(" ");
+                            $(".nav-tabs").append("<li role='presentation' class='tag tag-"+data.id+"' tagId="+data.id+"><a>"+data.text+"</a></li>");
+                            console.log("success");
+                            bind()
+                        },
+                        error: function(data) {
+                            console.log("failure");
+                        }
+                    });
+                    return false;
+                }
+            })
+
+            function bind(){
+                $(".tag-delete").unbind('click').bind('click', function () {
+                    var tagId = $(this).parent().attr("tagId");
+                    $.ajax({
+                        type: "POST",
+                        url: "/tagz/tag/delete/",
+                        data: { csrfmiddlewaretoken: '{{ csrf_token }}',
+                            tag_id: tagId,
+                        },
+                        success: function (data) {
+                            $("."+tagId).remove();
+                            $(".tag-"+tagId).remove();
+                            console.log("success");
+                        },
+                        error: function(data) {
+                            console.log("failure");
+                        }
+                    });
+                    return false;
+                })
+                $(".chunk-delete").unbind('click').bind('click', function () {
+                    var chunkId = $(this).parent().attr("chunkId");
+                    $.ajax({
+                        type: "POST",
+                        url: "/tagz/chunk/delete/",
+                        data: { csrfmiddlewaretoken: '{{ csrf_token }}',
+                            chunk_id: chunkId,
+                        },
+                        success: function (data) {
+                            $(".chunk-"+chunkId).remove();
+                            console.log("success");
+                        },
+                        error: function(data) {
+                            console.log("failure");
+                        }
+                    });
+                    return false;
+                })
+
+
+                
+
+                $(".check-btn").unbind("click").bind("click", function () {
+                    $(this).toggleClass('btn-primary');
+                });
+
+                $(".tag").unbind("click").bind("click", function () {
+                    var tag_id = $(this).attr("tagId");
+                    $.ajax({
+                        type: "POST",
+                        url: "/tagz/chunks/",
+                        data: {
+                            csrfmiddlewaretoken: '{{ csrf_token }}',
+                            tagz: tag_id,
+                        },
+                        success: function(data){
+                            $(".chunks").empty();
+                            $(".chunks").append(data);
+                            console.log('success');
+                        },
+                        error: function (data) {
+                            console.log("failture");
+                        }
+                    });
+                    return false;
+                })
+            }
+        })
+    </script>
+{% endblock %}

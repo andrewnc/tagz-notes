@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>TAGZ</title>
+<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+<script src="//cdn.tinymce.com/4/tinymce.min.js"></script>
+  <script>tinymce.init({ selector:'.text-chunk', browser_spellcheck: true, plugins: ['print', 'wordcount'] });</script>
+<style type="text/css">
+    .tag:hover{
+        cursor: pointer;
+    }
+</style>
+{% block extrastyles %}{% endblock %}
+</head>
+<body>
+
+<div class="pull-right" style='margin: 10px;'>
+  Welcome, {{ user }}
+  {% if user.is_anonymous %}
+  <a href="{% url 'django.contrib.auth.views.login' %}">login</a>
+  {% else %}
+  <a href="{% url 'django.contrib.auth.views.logout' %}">logout</a>
+  {% endif %}
+</div>
+
+<ul class="nav nav-tabs">
+      <li role="presentation" class="tag active" tagId="all"><a>All</a></li>
+    {% for tag in tagz %}
+      <li role="presentation" class="tag tag-{{ tag.id }}" tagId={{ tag.id }}><a>{{ tag.text }}</a></li>
+    {% endfor %}
+</ul>
+
+<div class="container-fluid">
+    {% block content %}
+    {% endblock %}
+</div>
+
+</body>
+{% block scripts %}{% endblock %}
+<script type="text/javascript">
+    $(document).ready(function () {
+        $('.tag').click(function () {
+            $('.tag').removeClass('active');
+            $(this).addClass('active');
+        })
+
+    });
+</script>
+</html>

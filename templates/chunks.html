@@ -1,0 +1,10 @@
+{% for chunk in chunks %}
+    <div class="panel panel-primary chunk-{{ chunk.id }}">
+        <div class="panel-heading" chunkId={{ chunk.id }}>
+            {% for tag in chunk.tagz_set.all %}{{ tag.text }}, {% endfor %} <span class="glyphicon glyphicon-remove pull-right chunk-delete">&nbsp;</span>
+        </div>
+        <div class="panel-body chunk-body">
+            {{ chunk.text }}
+        </div>
+    </div>
+{% endfor %}
